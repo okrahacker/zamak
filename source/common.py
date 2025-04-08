@@ -1,0 +1,5 @@
+# Copyright (c) 2025, Joseph Hargis. All rights reserved. See LICENSE for details.
+
+
+class Error:
+    pass
