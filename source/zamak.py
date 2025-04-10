@@ -1,7 +1,7 @@
 # Copyright (c) 2025, Joseph Hargis. All rights reserved. See LICENSE for details.
 
 
-from common import Error
+from lexer import Lexer, Token, TokenType
 import sys
 
 
@@ -41,7 +41,7 @@ class ArgumentParser:
         self.index += 1
         return sys.argv[self.index - 1]
     
-    def parseNextOption(self) -> None | Error:
+    def parseNextOption(self) -> None:
         option: str = self.advance()
         if option in ['-h', '--help']:
             self.options['--help'] = True
@@ -53,7 +53,7 @@ class ArgumentParser:
                 fileNames.append(self.advance())
             if len(fileNames) == 0:
                 printIncorrectUsage()
-                return Error()
+                quit(1)
             if '--compile' in self.options:
                 assert type(self.options['--compile']) == list
                 self.options['--compile'] += fileNames
@@ -61,34 +61,52 @@ class ArgumentParser:
                 self.options['--compile'] = fileNames
         else:
             printIncorrectUsage()
-            return Error()
+            quit(1)
 
-    def run(self) -> dict[str, str | bool | list[str]] | Error:
+    def run(self) -> dict[str, str | bool | list[str]]:
         while not self.isAtEnd():
-            if isinstance(self.parseNextOption(), Error):
-                return Error()
+            self.parseNextOption()
 
         return self.options
 
 
-def compileSourceCode(fileName: str):
-    pass
+def compileSourceCode(sourceCode: str):
+    lexer = Lexer()
+    tokens: list[Token] = lexer.run(sourceCode)
+    print('tokens:')
+    previousLineNumber: int = 0
+    for token in tokens:
+        if token.lineNumber != previousLineNumber:
+            previousLineNumber = token.lineNumber
+            print(f'    line {previousLineNumber}:')
+        match token.category:
+            case TokenType.PLUS:
+                print(f'     | PLUS')
+            case TokenType.MINUS:
+                print(f'     | MINUS')
+            case TokenType.STAR:
+                print(f'     | STAR')
+            case TokenType.SLASH:
+                print(f'     | SLASH')
+            case TokenType.LEFT_PAREN:
+                print(f'     | LEFT PAREN')
+            case TokenType.RIGHT_PAREN:
+                print(f'     | RIGHT_PAREN')
+            case TokenType.NUMBER:
+                print(f'     | NUMBER: {token.lexeme}')
 
 def compileFiles(fileNames: list[str]):
     for fileName in fileNames:
         sourceCode: str = ''
         with open(fileName, 'r') as sourceFile:
             sourceCode = sourceFile.read()
-        print(sourceCode)
         compileSourceCode(sourceCode)
 
 
 def main():
     argumentParser = ArgumentParser()
     options = argumentParser.run()
-    if isinstance(options, Error):
-        return
-    elif '--help' in options:
+    if '--help' in options:
         printHelpInfo()
     elif '--version' in options:
         printVersionInfo()

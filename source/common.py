@@ -3,3 +3,8 @@
 
 class Error:
     pass
+
+
+def reportError(lineNumber: int, message: str):
+    print(f'Error on line {lineNumber}: {message}')
+    quit(1)
