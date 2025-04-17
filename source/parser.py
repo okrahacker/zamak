@@ -14,6 +14,9 @@ class Parser:
     def isAtEnd(self) -> bool:
         return self.tokenIndex >= len(self.tokens)
 
+    def peekBehind(self) -> Token:
+        return self.tokens[self.tokenIndex - 1]
+
     def peek(self) -> Token:
         return self.tokens[self.tokenIndex]
     
@@ -29,8 +32,18 @@ class Parser:
                 return True
         return False
     
+    def matchKeyword(self, *keywords: str) -> bool:
+        for keyword in keywords:
+            if self.isAtEnd():
+                return False
+            elif self.match(TokenType.KEYWORD) and self.peek().lexeme == keyword:
+                return True
+        return False
+    
     def expect(self, tokenType: TokenType, errorMessage: str):
         if not self.match(tokenType):
+            if self.isAtEnd():
+                reportError(self.peekBehind().lineNumber, errorMessage)
             reportError(self.peek().lineNumber, errorMessage)
         else:
             self.advance()
@@ -44,8 +57,26 @@ class Parser:
         return stmt
     
     def expr(self) -> Expr:
-        return self.termExpr()
+        return self.logicalExpr()
     
+    def logicalExpr(self) -> Expr:
+        left: Expr = self.comparisonExpr()
+        while self.matchKeyword('and', 'or'):
+            operator: Token = self.advance()
+            right: Expr = self.comparisonExpr()
+            left = BinaryExpr(left, operator, right)
+        return left
+
+    def comparisonExpr(self) -> Expr:
+        left: Expr = self.termExpr()
+        while self.match(TokenType.EQUAL_EQUAL, TokenType.BANG_EQUAL,
+                         TokenType.LESSER, TokenType.LESSER_EQUAL,
+                         TokenType.GREATER, TokenType.GREATER_EQUAL):
+            operator: Token = self.advance()
+            right: Expr = self.termExpr()
+            left = BinaryExpr(left, operator, right)
+        return left
+
     def termExpr(self) -> Expr:
         left: Expr = self.factorExpr()
         while self.match(TokenType.PLUS, TokenType.MINUS):
@@ -55,15 +86,26 @@ class Parser:
         return left
     
     def factorExpr(self) -> Expr:
-        left: Expr = self.primaryExpr()
+        left: Expr = self.unaryExpr()
         while self.match(TokenType.STAR, TokenType.SLASH, TokenType.PERCENT):
             operator: Token = self.advance()
-            right: Expr = self.primaryExpr()
+            right: Expr = self.unaryExpr()
             left = BinaryExpr(left, operator, right)
         return left
     
+    def unaryExpr(self) -> Expr:
+        if self.peek().lexeme == 'not' or self.match(TokenType.MINUS):
+            operator: Token = self.advance()
+            expr: Expr = self.unaryExpr()
+            return UnaryExpr(operator, expr)
+        else:
+            return self.primaryExpr()
+    
     def primaryExpr(self) -> Expr:
-        if self.match(TokenType.LEFT_PAREN):
+        if self.isAtEnd():
+            reportError(self.peekBehind().lineNumber,
+                        'Expected an expression before the end of the file.')
+        elif self.match(TokenType.LEFT_PAREN):
             self.advance()  # Consume the '('.
             expr: Expr = self.expr()
             self.expect(TokenType.RIGHT_PAREN, 'Expected a closing ")".')

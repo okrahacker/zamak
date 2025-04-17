@@ -28,16 +28,15 @@ class TokenType(Enum):
     BANG_EQUAL = 14
     DOT = 15
     COMMA = 16
-    SINGLE_QUOTE = 17
-    PERCENT = 18
-    LEFT_CURLY = 19
-    RIGHT_CURLY = 20
+    PERCENT = 17
+    LEFT_CURLY = 18
+    RIGHT_CURLY = 19
 
-    KEYWORD = 21
-    IDENTIFIER = 22
+    KEYWORD = 20
+    IDENTIFIER = 21
 
-    INDENT = 23
-    DEDENT = 24
+    INDENT = 22
+    DEDENT = 23
 
     INTEGER_LIT = 100
     BOOLEAN_LIT = 101
@@ -121,21 +120,56 @@ class Lexer:
                 return Token(self.lineNumber, TokenType.DOT, '.')
             case ',':
                 return Token(self.lineNumber, TokenType.COMMA, ',')
-            case "'":
-                return Token(self.lineNumber, TokenType.SINGLE_QUOTE, "'")
             case '%':
                 return Token(self.lineNumber, TokenType.PERCENT, '%')
             case '{':
                 return Token(self.lineNumber, TokenType.LEFT_CURLY, '{')
             case '}':
                 return Token(self.lineNumber, TokenType.RIGHT_CURLY, '}')
+            # Multiple character tokens
+            case '=':
+                if self.peek() == '=':
+                    self.advance()
+                    return Token(self.lineNumber, TokenType.EQUAL_EQUAL, '==')
+                return Token(self.lineNumber, TokenType.EQUAL)
+            case '>':
+                if self.peek() == '=':
+                    self.advance()
+                    return Token(self.lineNumber, TokenType.GREATER_EQUAL, '>=')
+                return Token(self.lineNumber, TokenType.GREATER)
+            case '<':
+                if self.peek() == '=':
+                    self.advance()
+                    return Token(self.lineNumber, TokenType.LESSER_EQUAL, '<=')
+                return Token(self.lineNumber, TokenType.LESSER)
+            case '!' if self.peek() == '=':
+                self.advance()
+                return Token(self.lineNumber, TokenType.BANG_EQUAL, '!=')
+            # String literal
+            case "'":
+                stringLexeme: str = ''
+                while not self.isAtEnd() and self.peek() != "'":
+                    stringLexeme += self.advance()
+                if self.isAtEnd():
+                    reportError(self.lineNumber, 'Expected a quote to close string literal.')
+                self.advance()  # Consume the closing "'".
+                return Token(self.lineNumber, TokenType.STRING_LIT, stringLexeme)
             case _:
                 # Fallthrough to the code below.
                 pass
         if character in DIGITS:
             numberLexeme: str = character
-            while not self.isAtEnd() and (self.peek() in DIGITS or self.peek() in '_'):
+            foundDecimalPoint: bool = False
+            while not self.isAtEnd() and (self.peek() in DIGITS or self.peek() in ['_', '.']):
+                if self.peek() == '.' and not foundDecimalPoint:
+                    foundDecimalPoint = True
+                elif self.peek() == '.' and foundDecimalPoint:
+                    reportError(self.lineNumber, 'More than 1 decimal point in float literal.')
                 numberLexeme += self.advance()
+            if numberLexeme[len(numberLexeme) - 1] == '.':
+                reportError(self.lineNumber, 'Trailing decimal point in float literal.')
+            if foundDecimalPoint:
+                return Token(self.lineNumber, TokenType.FLOAT_LIT, numberLexeme)
             return Token(self.lineNumber, TokenType.INTEGER_LIT, numberLexeme)
         elif character in ALPHAS:
             lexeme: str = character
@@ -143,6 +177,8 @@ class Lexer:
                 lexeme += self.advance()
             if lexeme in KEYWORDS:
                 return Token(self.lineNumber, TokenType.KEYWORD, lexeme)
+            elif lexeme in ['true', 'false']:
+                return Token(self.lineNumber, TokenType.BOOLEAN_LIT, lexeme)
             else:
                 return Token(self.lineNumber, TokenType.IDENTIFIER, lexeme)
         else:

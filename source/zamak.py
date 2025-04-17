@@ -82,36 +82,6 @@ def compileSourceCode(sourceCode: str):
             previousLineNumber = token.lineNumber
             print(f'    line {previousLineNumber}:')
         match token.category:
-            case TokenType.PLUS:
-                print(f'     | PLUS')
-            case TokenType.MINUS:
-                print(f'     | MINUS')
-            case TokenType.STAR:
-                print(f'     | STAR')
-            case TokenType.SLASH:
-                print(f'     | SLASH')
-            case TokenType.LEFT_PAREN:
-                print(f'     | LEFT PAREN')
-            case TokenType.RIGHT_PAREN:
-                print(f'     | RIGHT_PAREN')
-            case TokenType.SEMICOLON:
-                print(f'     | SEMICOLON')
-            case TokenType.EQUAL:
-                print(f'     | EQUAL')
-            case TokenType.EQUAL_EQUAL:
-                print(f'     | EQUAL EQUAL')
-            case TokenType.DOT:
-                print(f'     | DOT')
-            case TokenType.COMMA:
-                print(f'     | COMMA')
-            case TokenType.SINGLE_QUOTE:
-                print(f'     | SINGLE QUOTE')
-            case TokenType.PERCENT:
-                print(f'     | PERCENT')
-            case TokenType.LEFT_CURLY:
-                print(f'     | LEFT CURLY')
-            case TokenType.RIGHT_CURLY:
-                print(f'     | RIGHT CURLY')
             case TokenType.IDENTIFIER:
                 print(f'     | IDENTIFIER: {token.lexeme}')
             case TokenType.KEYWORD:
@@ -121,13 +91,15 @@ def compileSourceCode(sourceCode: str):
             case TokenType.DEDENT:
                 print(f'     | DEDENT')
             case TokenType.INTEGER_LIT:
-                print(f'     | NUMBER LIT: {token.lexeme}')
+                print(f'     | INTEGER LIT: {token.lexeme}')
             case TokenType.BOOLEAN_LIT:
                 print(f'     | BOOLEAN LIT: {token.lexeme}')
             case TokenType.STRING_LIT:
-                print(f'     | STRING LIT: {token.lexeme}')
+                print(f"     | STRING LIT: '{token.lexeme}'")
+            case TokenType.FLOAT_LIT:
+                print(f'     | FLOAT LIT: {token.lexeme}')
             case _:
-                raise NotImplementedError()
+                print(f'     | {token.lexeme}')
     print('')
     parser = Parser()
     trees: list[Stmt] = parser.run(tokens)
