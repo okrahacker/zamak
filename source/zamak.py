@@ -2,6 +2,8 @@
 
 
 from lexer import Lexer, Token, TokenType
+from parser import Parser
+from trees import *
 import sys
 
 
@@ -92,8 +94,47 @@ def compileSourceCode(sourceCode: str):
                 print(f'     | LEFT PAREN')
             case TokenType.RIGHT_PAREN:
                 print(f'     | RIGHT_PAREN')
-            case TokenType.NUMBER:
-                print(f'     | NUMBER: {token.lexeme}')
+            case TokenType.SEMICOLON:
+                print(f'     | SEMICOLON')
+            case TokenType.EQUAL:
+                print(f'     | EQUAL')
+            case TokenType.EQUAL_EQUAL:
+                print(f'     | EQUAL EQUAL')
+            case TokenType.DOT:
+                print(f'     | DOT')
+            case TokenType.COMMA:
+                print(f'     | COMMA')
+            case TokenType.SINGLE_QUOTE:
+                print(f'     | SINGLE QUOTE')
+            case TokenType.PERCENT:
+                print(f'     | PERCENT')
+            case TokenType.LEFT_CURLY:
+                print(f'     | LEFT CURLY')
+            case TokenType.RIGHT_CURLY:
+                print(f'     | RIGHT CURLY')
+            case TokenType.IDENTIFIER:
+                print(f'     | IDENTIFIER: {token.lexeme}')
+            case TokenType.KEYWORD:
+                print(f'     | KEYWORD: {token.lexeme}')
+            case TokenType.INDENT:
+                print(f'     | INDENT')
+            case TokenType.DEDENT:
+                print(f'     | DEDENT')
+            case TokenType.INTEGER_LIT:
+                print(f'     | NUMBER LIT: {token.lexeme}')
+            case TokenType.BOOLEAN_LIT:
+                print(f'     | BOOLEAN LIT: {token.lexeme}')
+            case TokenType.STRING_LIT:
+                print(f'     | STRING LIT: {token.lexeme}')
+            case _:
+                raise NotImplementedError()
+    print('')
+    parser = Parser()
+    trees: list[Stmt] = parser.run(tokens)
+    print('trees:')
+    for tree in trees:
+        print(f'    {tree}')
+
 
 def compileFiles(fileNames: list[str]):
     for fileName in fileNames:
