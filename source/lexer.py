@@ -7,7 +7,7 @@ from enum import Enum
 
 DIGITS = '1234567890'
 ALPHAS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_'
-KEYWORDS = ['and', 'not', 'or']
+KEYWORDS = ['and', 'not', 'or', 'let', 'set']
 INDENT_AMOUNT = 4
 
 

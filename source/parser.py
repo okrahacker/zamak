@@ -40,17 +40,46 @@ class Parser:
                 return True
         return False
     
-    def expect(self, tokenType: TokenType, errorMessage: str):
+    def expect(self, tokenType: TokenType, errorMessage: str) -> Token:
         if not self.match(tokenType):
             if self.isAtEnd():
                 reportError(self.peekBehind().lineNumber, errorMessage)
             reportError(self.peek().lineNumber, errorMessage)
+            # This line should never run. It's here for type checking reasons.
+            return self.peekBehind()
         else:
-            self.advance()
+            return self.advance()
     
     def parse(self) -> Stmt:
-        return self.exprStmt()
+        return self.stmt()
     
+    def stmt(self) -> Stmt:
+        if self.matchKeyword('let'):
+            return self.letStmt()
+        elif self.matchKeyword('set'):
+            return self.assignStmt()
+        else:
+            return self.exprStmt()
+    
+    def assignStmt(self) -> Stmt:
+        self.advance()  # Consume the 'set' keyword.
+        identifier: Expr = self.expr()
+        self.expect(TokenType.EQUAL, 'Expected an "=" in set statement.')
+        expr: Expr = self.expr()
+        self.expect(TokenType.SEMICOLON, 'Expected a ";" after set statement.')
+        return AssignStmt(identifier, expr)
+
+    def letStmt(self) -> Stmt:
+        self.advance()  # Consume the 'let' keyword.
+        typeExpr: Expr = self.expr()
+        identifier: Token = self.expect(TokenType.IDENTIFIER,
+                                        'Expected an identifier in let statement.')
+        self.expect(TokenType.EQUAL, 'Expected an "=" in let statement.')
+        expr: Expr = self.expr()
+        self.expect(TokenType.SEMICOLON,
+                    'Expected a ";" after expression in let statement.')
+        return LetStmt(typeExpr, identifier, expr)
+
     def exprStmt(self) -> Stmt:
         stmt: Stmt = ExprStmt(self.expr())
         self.expect(TokenType.SEMICOLON, 'Expected a ";" after expression statement.')
@@ -114,6 +143,8 @@ class Parser:
                         TokenType.STRING_LIT, TokenType.ARRAY_LIT,
                         TokenType.STRUCT_LIT, TokenType.FLOAT_LIT):
             return LiteralExpr(self.advance())
+        elif self.match(TokenType.IDENTIFIER):
+            return IdentifierExpr(self.advance())
         else:
             reportError(self.peek().lineNumber, 'Expected an expression.')
         return Expr()

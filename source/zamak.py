@@ -3,7 +3,8 @@
 
 from lexer import Lexer, Token, TokenType
 from parser import Parser
-from typechecker import TypeChecker
+from typechecker import TypeChecker, DataType
+from resolver import NameResolver
 from trees import *
 import sys
 
@@ -107,8 +108,10 @@ def compileSourceCode(sourceCode: str):
     print('trees:')
     for tree in trees:
         print(f'    {tree}')
+    nameResolver = NameResolver()
+    identifiers: dict[str, DataType] = nameResolver.run(trees)
     typeChecker = TypeChecker()
-    typeChecker.run(trees)
+    typeChecker.run(trees, identifiers)
 
 
 def compileFiles(fileNames: list[str]):

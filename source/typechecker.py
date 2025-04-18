@@ -13,6 +13,14 @@ class DataType(Enum):
     FLOAT = 3
 
 
+BUILT_IN_TYPES = {'Int8': DataType.INTEGER, 'Int16': DataType.INTEGER,
+                  'Int32': DataType.INTEGER, 'Int64': DataType.INTEGER,
+                  'Uint8': DataType.INTEGER, 'Uint16': DataType.INTEGER,
+                  'Uint32': DataType.INTEGER, 'Uint64': DataType.INTEGER,
+                  'Float32': DataType.FLOAT, 'Float64': DataType.FLOAT,
+                  'Str': DataType.STRING, 'Bool': DataType.BOOLEAN}
+
+
 class TypeChecker:
     def checkExpr(self, expr: Expr) -> DataType:
         if isinstance(expr, LiteralExpr):
@@ -74,15 +82,26 @@ class TypeChecker:
                 return DataType.BOOLEAN
             else:
                 raise NotImplementedError
+        elif isinstance(expr, IdentifierExpr):
+            return self.declaredIdentifiers[expr.identifier.lexeme]
         else:
             raise NotImplementedError
             
     def checkStmt(self, stmt: Stmt):
         if isinstance(stmt, ExprStmt):
             self.checkExpr(stmt.expr)
+        elif isinstance(stmt, LetStmt):
+            self.checkExpr(stmt.expr)
+        elif isinstance(stmt, AssignStmt):
+            identifierType: DataType = self.checkExpr(stmt.identifier)
+            exprType: DataType = self.checkExpr(stmt.expr)
+            if identifierType != exprType:
+                reportError(stmt.lineNumber, 'Identifier and expression type '
+                                             'in set statement don\'t match.')
         else:
             raise NotImplementedError
 
-    def run(self, trees: list[Stmt]):
+    def run(self, trees: list[Stmt], identifiers: dict[str, DataType]):
+        self.declaredIdentifiers: dict[str, DataType] = identifiers
         for stmt in trees:
             self.checkStmt(stmt)

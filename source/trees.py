@@ -27,6 +27,14 @@ class LiteralExpr(Expr):
         else:
             return f'{self.literal.lexeme}'
 
+class IdentifierExpr(Expr):
+    def __init__(self, identifier: Token):
+        self.identifier: Token = identifier
+        self.lineNumber = identifier.lineNumber
+    
+    def __repr__(self) -> str:
+        return f'{self.identifier.lexeme}'
+
 class UnaryExpr(Expr):
     def __init__(self, operator: Token, expr: Expr):
         self.operator: Token = operator
@@ -53,3 +61,22 @@ class ExprStmt(Stmt):
 
     def __repr__(self) -> str:
         return f'{self.expr};'
+
+class LetStmt(Stmt):
+    def __init__(self, typeExpr: Expr, identifier: Token, expr: Expr):
+        self.typeExpr: Expr = typeExpr
+        self.identifier: Token = identifier
+        self.expr: Expr = expr
+        self.lineNumber: int = expr.lineNumber
+    
+    def __repr__(self) -> str:
+        return f'let {self.typeExpr} {self.identifier.lexeme} = {self.expr};'
+
+class AssignStmt(Stmt):
+    def __init__(self, identifier: Expr, expr: Expr):
+        self.identifier: Expr = identifier
+        self.expr: Expr = expr
+        self.lineNumber = identifier.lineNumber
+    
+    def __repr__(self) -> str:
+        return f'set {self.identifier} = {self.expr};'
